@@ -5,6 +5,7 @@ import { ContextExplorer } from './components/ContextExplorer';
 import { JudgeSuite } from './components/JudgeSuite';
 import { SubmissionManager } from './components/SubmissionManager';
 import { HealthDashboard } from './components/HealthDashboard';
+import { API_BASE } from './config';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('studio');
@@ -14,7 +15,7 @@ export default function App() {
   // Fetch Health status
   const fetchHealth = async () => {
     try {
-      const res = await fetch('http://localhost:8080/v1/healthz');
+      const res = await fetch(`${API_BASE}/v1/healthz`);
       const data = await res.json();
       setHealthData(data);
     } catch (err) {
@@ -25,7 +26,7 @@ export default function App() {
   // Fetch All Contexts
   const fetchContexts = async () => {
     try {
-      const res = await fetch('http://localhost:8080/api/contexts');
+      const res = await fetch(`${API_BASE}/api/contexts`);
       const data = await res.json();
       if (data.contexts) {
         setContexts(data.contexts);
