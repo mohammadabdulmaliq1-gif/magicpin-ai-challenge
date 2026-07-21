@@ -196,6 +196,8 @@ class VeraComposer:
             "rationale": str
         }
         """
+        msg_lower = message.lower()
+
         # 1. Auto-reply detection exit
         if is_auto_reply:
             return {
@@ -210,7 +212,7 @@ class VeraComposer:
                 "rationale": "Merchant requested to stop or expressed hostility. Gracefully acknowledging and ending conversation immediately."
             }
 
-        # 3. Intent transition to Action
+        # 3. Intent transition to Action (Affirmative)
         if is_intent_action:
             body_reply = (
                 "Awesome! I'm on it. I've updated your profile details and activated the post on Google Business: "
@@ -226,19 +228,45 @@ class VeraComposer:
             }
 
         # 4. Wait request
-        msg_lower = message.lower()
-        if "busy" in msg_lower or "later" in msg_lower or "call me in" in msg_lower:
+        if "busy" in msg_lower or "later" in msg_lower or "call me in" in msg_lower or "wait" in msg_lower:
             return {
                 "action": "wait",
                 "wait_seconds": 1800,
                 "rationale": "Merchant requested time delay. Backing off 30 minutes."
             }
 
-        # 5. General engaged multi-turn reply
-        body_reply = f"Got it! I can take care of that right away for you. Would you like me to focus on your main offer or customer reviews first?"
+        # 5. Offer specific response
+        if "offer" in msg_lower or "discount" in msg_lower or "deal" in msg_lower or "package" in msg_lower:
+            body_reply = "Perfect! I'm preparing a high-converting 'Special Offer' banner for your listing based on your category's top pricing strategy. Shall I publish this offer live on your Google Business profile now?"
+            return {
+                "action": "send",
+                "body": body_reply,
+                "cta": "binary_yes_no",
+                "rationale": "Merchant requested focus on active offers. Proposed specific offer publication with binary YES/NO CTA."
+            }
+
+        # 6. Reviews specific response
+        if "review" in msg_lower or "rating" in msg_lower or "star" in msg_lower or "feedback" in msg_lower:
+            body_reply = "Got it! I've analyzed your recent customer ratings. I can enable automated 5★ WhatsApp review requests for your recent visitors. Shall I set this up for you today?"
+            return {
+                "action": "send",
+                "body": body_reply,
+                "cta": "binary_yes_no",
+                "rationale": "Merchant requested focus on customer reviews. Proposed 5-star automated review setup."
+            }
+
+        # 7. Progressive multi-turn engaged dialogue based on turn count
+        if turn_number >= 3:
+            body_reply = "Great choice! I have drafted the update for your profile based on your request. Reply YES to confirm and publish immediately!"
+            cta = "binary_yes_no"
+        else:
+            body_reply = "Got it! I can take care of that right away for you. Would you like me to focus on your main offer or customer reviews first?"
+            cta = "option_choice"
+
         return {
             "action": "send",
             "body": body_reply,
-            "cta": "open_ended",
-            "rationale": "Engaged merchant turn. Continuing active dialogue with low-friction follow-up."
+            "cta": cta,
+            "rationale": f"Engaged turn #{turn_number}. Continuing multi-turn dialogue with tailored low-friction options."
         }
+

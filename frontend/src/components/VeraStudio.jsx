@@ -239,12 +239,66 @@ export function VeraStudio({ contexts }) {
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           }
         ]);
+      } else if (lower.includes('offer') || lower.includes('discount') || lower.includes('deal') || lower.includes('package')) {
+        actionObj = {
+          action: 'send',
+          body: "Perfect! I'm preparing a high-converting 'Special Offer' banner for your listing based on your category's top pricing strategy. Shall I publish this offer live on your Google Business profile now?",
+          cta: 'binary_yes_no',
+          rationale: "Merchant requested focus on active offers. Proposed specific offer publication with binary YES/NO CTA."
+        };
+        setChatMessages(prev => [
+          ...prev,
+          {
+            id: `msg_v_${Date.now()}`,
+            sender: 'Vera',
+            text: actionObj.body,
+            cta: actionObj.cta,
+            send_as: 'vera',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }
+        ]);
+      } else if (lower.includes('review') || lower.includes('rating') || lower.includes('star') || lower.includes('feedback')) {
+        actionObj = {
+          action: 'send',
+          body: "Got it! I've analyzed your recent customer ratings. I can enable automated 5★ WhatsApp review requests for your recent visitors. Shall I set this up for you today?",
+          cta: 'binary_yes_no',
+          rationale: "Merchant requested focus on customer reviews. Proposed 5-star automated review setup."
+        };
+        setChatMessages(prev => [
+          ...prev,
+          {
+            id: `msg_v_${Date.now()}`,
+            sender: 'Vera',
+            text: actionObj.body,
+            cta: actionObj.cta,
+            send_as: 'vera',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }
+        ]);
+      } else if (turnCount >= 2) {
+        actionObj = {
+          action: 'send',
+          body: "Great choice! I have drafted the update for your profile based on your request. Reply YES to confirm and publish immediately!",
+          cta: 'binary_yes_no',
+          rationale: `Turn #${turnCount + 1} engaged dialogue. Moving to single binary confirmation.`
+        };
+        setChatMessages(prev => [
+          ...prev,
+          {
+            id: `msg_v_${Date.now()}`,
+            sender: 'Vera',
+            text: actionObj.body,
+            cta: actionObj.cta,
+            send_as: 'vera',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }
+        ]);
       } else {
         actionObj = {
           action: 'send',
           body: "Got it! I can take care of that right away for you. Would you like me to focus on your main offer or customer reviews first?",
-          cta: 'open_ended',
-          rationale: "Engaged multi-turn dialogue. Continuing low-friction conversation."
+          cta: 'option_choice',
+          rationale: "Engaged merchant turn. Continuing active dialogue with low-friction options."
         };
         setChatMessages(prev => [
           ...prev,
