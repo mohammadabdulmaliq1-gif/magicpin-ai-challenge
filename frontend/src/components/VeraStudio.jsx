@@ -46,21 +46,22 @@ export function VeraStudio({ contexts }) {
           customer_id: selectedCust || null
         })
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      if (data.result) {
-        setLatestComposition(data);
-        setChatMessages([
-          {
-            id: 'msg_1',
-            sender: data.result.send_as === 'merchant_on_behalf' ? 'Vera (on behalf of Merchant)' : 'Vera',
-            text: data.result.body,
-            cta: data.result.cta,
-            send_as: data.result.send_as,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          }
-        ]);
-        setTurnCount(1);
-      }
+      if (!data || !data.result) throw new Error("Missing result");
+
+      setLatestComposition(data);
+      setChatMessages([
+        {
+          id: 'msg_1',
+          sender: data.result.send_as === 'merchant_on_behalf' ? 'Vera (on behalf of Merchant)' : 'Vera',
+          text: data.result.body,
+          cta: data.result.cta,
+          send_as: data.result.send_as,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }
+      ]);
+      setTurnCount(1);
     } catch (err) {
       console.warn('Backend API unreachable, using deterministic engine fallback:', err);
       let fallbackText = "Dr. Meera, JIDA's Oct issue landed: 3-month fluoride recall cuts caries recurrence 38% better than 6-month. (2,100-patient trial). Want me to pull the abstract + draft a patient-ed WhatsApp for you?";
@@ -113,17 +114,15 @@ export function VeraStudio({ contexts }) {
     if (!text.trim()) return;
 
     const convId = `sandbox_conv_${selectedMerch}_${selectedTrg}`;
-    const newMessages = [
-      ...chatMessages,
-      {
-        id: `msg_m_${Date.now()}`,
-        sender: 'Merchant / Customer',
-        text: text,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        isUser: true
-      }
-    ];
-    setChatMessages(newMessages);
+    const userMsg = {
+      id: `msg_m_${Date.now()}`,
+      sender: 'Merchant / Customer',
+      text: text,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isUser: true
+    };
+
+    setChatMessages(prev => [...prev, userMsg]);
     setUserInput('');
     setLoading(true);
 
@@ -140,12 +139,14 @@ export function VeraStudio({ contexts }) {
           turn_number: turnCount + 1
         })
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
+      if (!data || !data.action) throw new Error("Missing action");
       setTurnCount(prev => prev + 1);
 
       if (data.action === 'send' && data.body) {
-        setChatMessages([
-          ...newMessages,
+        setChatMessages(prev => [
+          ...prev,
           {
             id: `msg_v_${Date.now()}`,
             sender: 'Vera',
@@ -156,8 +157,8 @@ export function VeraStudio({ contexts }) {
           }
         ]);
       } else if (data.action === 'end') {
-        setChatMessages([
-          ...newMessages,
+        setChatMessages(prev => [
+          ...prev,
           {
             id: `msg_v_${Date.now()}`,
             sender: 'System (Conversation Ended)',
@@ -167,8 +168,8 @@ export function VeraStudio({ contexts }) {
           }
         ]);
       } else if (data.action === 'wait') {
-        setChatMessages([
-          ...newMessages,
+        setChatMessages(prev => [
+          ...prev,
           {
             id: `msg_v_${Date.now()}`,
             sender: 'System (Waiting)',
@@ -195,8 +196,8 @@ export function VeraStudio({ contexts }) {
           action: 'end',
           rationale: "Detected WhatsApp auto-reply string ('Thank you for contacting us...'). Exited gracefully to save turns."
         };
-        setChatMessages([
-          ...newMessages,
+        setChatMessages(prev => [
+          ...prev,
           {
             id: `msg_v_${Date.now()}`,
             sender: 'System (Auto-Reply Exit)',
@@ -210,8 +211,8 @@ export function VeraStudio({ contexts }) {
           action: 'end',
           rationale: "Hostile opt-out detected. Gracefully acknowledging and stopping future outreach."
         };
-        setChatMessages([
-          ...newMessages,
+        setChatMessages(prev => [
+          ...prev,
           {
             id: `msg_v_${Date.now()}`,
             sender: 'System (Opt-Out Exit)',
@@ -227,8 +228,8 @@ export function VeraStudio({ contexts }) {
           cta: 'open_ended',
           rationale: "Merchant expressed clear affirmative commitment ('yes/ok/let's do it'). Switched immediately from qualifying mode to action execution mode."
         };
-        setChatMessages([
-          ...newMessages,
+        setChatMessages(prev => [
+          ...prev,
           {
             id: `msg_v_${Date.now()}`,
             sender: 'Vera',
@@ -245,8 +246,8 @@ export function VeraStudio({ contexts }) {
           cta: 'open_ended',
           rationale: "Engaged multi-turn dialogue. Continuing low-friction conversation."
         };
-        setChatMessages([
-          ...newMessages,
+        setChatMessages(prev => [
+          ...prev,
           {
             id: `msg_v_${Date.now()}`,
             sender: 'Vera',
